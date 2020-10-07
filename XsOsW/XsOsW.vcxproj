@@ -156,10 +156,12 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="XsOsW.h" />
+    <ClInclude Include="XsOsWView.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="xsos.c" />
     <ClCompile Include="XsOsW.c" />
+    <ClCompile Include="XsOsWView.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="XsOsW.rc" />

@@ -3,6 +3,7 @@
 
 #include "framework.h"
 #include "XsOsW.h"
+#include "XsOsWView.h"
 
 #define MAX_LOADSTRING 100
 
@@ -16,6 +17,7 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+XsOsWView view;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -33,7 +35,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     MyRegisterClass(hInstance);
 
     // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
+    if ((view = XsOsWViewCreate()) == NULL || !InitInstance (hInstance, nCmdShow))
     {
         return FALSE;
     }
@@ -144,9 +146,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_PAINT:
         {
+			RECT rc;
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
+			GetClientRect(hWnd, &rc);
+			XsOsWViewUpdateArea(view, hdc, &rc);
             EndPaint(hWnd, &ps);
         }
         break;

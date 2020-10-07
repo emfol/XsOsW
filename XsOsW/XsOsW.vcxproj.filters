@@ -30,6 +30,9 @@
     <ClInclude Include="xsos.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="XsOsWView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="XsOsW.rc">
@@ -49,6 +52,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="xsos.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="XsOsWView.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
