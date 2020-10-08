@@ -34,7 +34,7 @@ unsigned int xsos_winner(unsigned int state) {
 	const unsigned int sels = s & 0x1ff;
 	const unsigned int syms = (s >> 9) & 0x1ff;
 	unsigned int i;
-	for (i = 0; i < sizeof patterns / sizeof(int); ++i) {
+	for (i = 0; i < sizeof patterns / sizeof(unsigned int); ++i) {
 		const unsigned int winp = patterns[i];
 		if ((sels & winp) == winp) {
 			const unsigned int symp = syms & winp;
