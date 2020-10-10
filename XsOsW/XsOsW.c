@@ -147,11 +147,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
         {
 			RECT rc;
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-			GetClientRect(hWnd, &rc);
-			XsOsWViewUpdateArea(view, hdc, &rc);
-            EndPaint(hWnd, &ps);
+			PAINTSTRUCT ps;
+			HDC hdc;
+			if (GetClientRect(hWnd, &rc) && (hdc = BeginPaint(hWnd, &ps)) != NULL) {
+				XsOsWViewUpdateArea(view, hdc, &rc);
+				EndPaint(hWnd, &ps);
+			}
         }
         break;
     case WM_DESTROY:
