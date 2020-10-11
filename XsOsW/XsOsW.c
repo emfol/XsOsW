@@ -144,6 +144,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+	case WM_LBUTTONUP:
+		{
+			HDC hdc = GetDC(hWnd);
+			if (hdc != NULL) {
+				XsOsWViewHandleMouseUp(view, hdc, LOWORD(lParam), HIWORD(lParam), TRUE);
+				ReleaseDC(hWnd, hdc);
+			}
+		}
+		break;
+	case WM_LBUTTONDOWN:
+		{
+			HDC hdc = GetDC(hWnd);
+			if (hdc != NULL) {
+				XsOsWViewHandleMouseDown(view, hdc, LOWORD(lParam), HIWORD(lParam));
+				ReleaseDC(hWnd, hdc);
+			}
+		}
+		break;
     case WM_PAINT:
         {
 			RECT rc;

@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define N_SYMBOL_AREAS 9
-#define SZ_SYMBOL_AREAS 8.0f
+#define N_SYMBOLS 9
+#define SZ_SYMBOL_AREA 8.0f
 
 /*
  * Type Definitions and Data Structures
@@ -34,9 +34,10 @@ struct rect {
 };
 
 struct XsOsWView {
-	struct point lastClick;
+	int selected;
 	struct rect area;
-	struct rect symbolAreas[N_SYMBOL_AREAS];
+	struct rect symbolAreas[N_SYMBOLS];
+	char symbols[N_SYMBOLS];
 };
 
 /*
@@ -66,12 +67,23 @@ static void XsOsWViewUpdateSymbolAreas(XsOsWView view) {
 			fpoint.x = points[j];
 			fpoint.y = points[i];
 			getScaledPoint(&fpoint, &fscale, &area->tl, 32.0f);
-			fpoint.x += SZ_SYMBOL_AREAS;
-			fpoint.y += SZ_SYMBOL_AREAS;
+			fpoint.x += SZ_SYMBOL_AREA;
+			fpoint.y += SZ_SYMBOL_AREA;
 			getScaledPoint(&fpoint, &fscale, &area->br, 32.0f);
 			++area;
 		}
 	}
+}
+
+static int XsOsWViewGetSymbolAreaIndex(XsOsWView view, int x, int y) {
+	int i;
+	struct rect *area, *areas;
+	for (i = 0, areas = view->symbolAreas; i < N_SYMBOLS; ++i) {
+		area = areas + i;
+		if (x >= area->tl.x && x < area->br.x && y >= area->tl.y && y < area->br.y)
+			return i;
+	}
+	return -1;
 }
 
 static void XsOsWViewPaintX(HDC hdc, int x, int y, int w, int h) {
@@ -117,9 +129,9 @@ static void XsOsWViewFillRect(HDC hdc, struct rect *area) {
 }
 
 static void XsOsWViewClear(XsOsWView view, HDC hdc) {
-	HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(WHITE_BRUSH));
+	HGDIOBJ oldObj = SelectObject(hdc, GetStockObject(WHITE_BRUSH));
 	XsOsWViewFillRect(hdc, &view->area);
-	SelectObject(hdc, oldBrush);
+	DeleteObject(SelectObject(hdc, oldObj));
 }
 
 static void XsOsWViewPaintGrid(XsOsWView view, HDC hdc) {
@@ -186,7 +198,7 @@ static void XsOsWViewPaintGrid(XsOsWView view, HDC hdc) {
 }
 
 static void XsOsWViewPaintSymbol(XsOsWView view, HDC hdc, int index, char symbol) {
-	if (index >= 0 && index < N_SYMBOL_AREAS) {
+	if (index >= 0 && index < N_SYMBOLS) {
 		XsOsWViewSymbolPainter painter = NULL;
 		if (symbol == 'x' || symbol == 'X')
 			painter = XsOsWViewPaintX;
@@ -200,13 +212,19 @@ static void XsOsWViewPaintSymbol(XsOsWView view, HDC hdc, int index, char symbol
 }
 
 static void XsOsWViewPaintSymbols(XsOsWView view, HDC hdc) {
-	int i;
-	HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(GRAY_BRUSH));
-	for (i = 0; i < N_SYMBOL_AREAS; ++i)
-		XsOsWViewFillRect(hdc, view->symbolAreas + i);
-	SelectObject(hdc, oldBrush);
+	HGDIOBJ oldObj;
+	struct rect *areas;
+	char *symbols;
+	int i, selected;
+	for (i = 0, selected = view->selected, areas = view->symbolAreas, symbols = view->symbols; i < N_SYMBOLS; ++i) {
+		if (i == selected) {
+			oldObj = SelectObject(hdc, GetStockObject(GRAY_BRUSH));
+			XsOsWViewFillRect(hdc, areas + i);
+			DeleteObject(SelectObject(hdc, oldObj));
+		}
+		XsOsWViewPaintSymbol(view, hdc, i, *(symbols + i));
+	}
 }
-
 
 /*
  * API
@@ -215,20 +233,22 @@ static void XsOsWViewPaintSymbols(XsOsWView view, HDC hdc) {
 XsOsWView XsOsWViewCreate(void) {
 	XsOsWView view = (XsOsWView)malloc(sizeof(struct XsOsWView));
 	if (view != NULL) {
+		struct rect *area, *areas;
+		char *symbols;
 		int i;
+		view->selected = -1;
 		view->area.tl.x = 0;
 		view->area.tl.y = 0;
 		view->area.br.x = 0;
 		view->area.br.y = 0;
-		for (i = 0; i < N_SYMBOL_AREAS; ++i) {
-			struct rect *area = view->symbolAreas + i;
+		for (i = 0, areas = view->symbolAreas, symbols = view->symbols; i < N_SYMBOLS; ++i) {
+			area = areas + i;
 			area->tl.x = 0;
 			area->tl.y = 0;
 			area->br.x = 0;
 			area->br.y = 0;
+			*(symbols + i) = ' ';
 		}
-		view->lastClick.x = 0;
-		view->lastClick.y = 0;
 	}
 	return view;
 }
@@ -239,15 +259,16 @@ void XsOsWViewDestroy(XsOsWView view) {
 }
 
 void XsOsWViewPaint(XsOsWView view, HDC hdc) {
-	HGDIOBJ oldBrush;
+	HGDIOBJ oldObj;
 	// Clear View Area
 	XsOsWViewClear(view, hdc);
 	// Draw X
-	oldBrush = SelectObject(hdc, GetStockObject(BLACK_BRUSH));
+	oldObj = SelectObject(hdc, GetStockObject(BLACK_BRUSH));
 	XsOsWViewPaintGrid(view, hdc);
 	XsOsWViewPaintSymbols(view, hdc);
+	// Temp
 	XsOsWViewPaintSymbol(view, hdc, 8, 'x');
-	SelectObject(hdc, oldBrush);
+	DeleteObject(SelectObject(hdc, oldObj));
 }
 
 void XsOsWViewUpdateArea(XsOsWView view, HDC hdc, LPRECT area) {
@@ -260,12 +281,24 @@ void XsOsWViewUpdateArea(XsOsWView view, HDC hdc, LPRECT area) {
 }
 
 int XsOsWViewHandleMouseDown(XsOsWView view, HDC hdc, int x, int y) {
-	view->lastClick.x = x;
-	view->lastClick.y = y;
-	XsOsWViewPaint(view, hdc);
-	return 0;
+	int selected = XsOsWViewGetSymbolAreaIndex(view, x, y);
+	if (selected >= 0 && selected < N_SYMBOLS && view->selected == -1) {
+		view->selected = selected;
+		XsOsWViewPaint(view, hdc);
+		return selected;
+	}
+	return -1;
 }
 
-int XsOsWViewHandleMouseUp(XsOsWView view, HDC hdc, int x, int y) {
-	return 0;
+int XsOsWViewHandleMouseUp(XsOsWView view, HDC hdc, int x, int y, BOOL repaint) {
+	int selected, click = -1;
+	if (view->selected != -1) {
+		selected = XsOsWViewGetSymbolAreaIndex(view, x, y);
+		if (selected >= 0 && selected < N_SYMBOLS && selected == view->selected)
+			click = selected;
+		view->selected = -1;
+		if (repaint)
+			XsOsWViewPaint(view, hdc);
+	}
+	return click;
 }
