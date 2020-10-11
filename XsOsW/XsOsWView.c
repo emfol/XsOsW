@@ -117,6 +117,25 @@ static void XsOsWViewPaintX(HDC hdc, int x, int y, int w, int h) {
 	FillPath(hdc);
 }
 
+static void XsOsWViewPaintO(HDC hdc, int x, int y, int w, int h) {
+	int sx = x + w - 1;
+	int sy = y + h / 2;
+	BeginPath(hdc);
+	Arc(
+		hdc,
+		x,
+		y,
+		x + w,
+		y + h,
+		sx,
+		sy,
+		sx,
+		sy
+	);
+	EndPath(hdc);
+	FillPath(hdc);
+}
+
 static void XsOsWViewFillRect(HDC hdc, struct rect *area) {
 	BeginPath(hdc);
 	MoveToEx(hdc, area->tl.x, area->tl.y, NULL);
@@ -203,7 +222,7 @@ static void XsOsWViewPaintSymbol(XsOsWView view, HDC hdc, int index, char symbol
 		if (symbol == 'x' || symbol == 'X')
 			painter = XsOsWViewPaintX;
 		else if (symbol == 'o' || symbol == 'O')
-			painter = NULL;
+			painter = XsOsWViewPaintO;
 		if (painter != NULL) {
 			struct rect *area = view->symbolAreas + index;
 			(*painter)(hdc, area->tl.x, area->tl.y, area->br.x - area->tl.x, area->br.y - area->tl.y);
@@ -262,29 +281,39 @@ void XsOsWViewPaint(XsOsWView view, HDC hdc) {
 	HGDIOBJ oldObj;
 	// Clear View Area
 	XsOsWViewClear(view, hdc);
-	// Draw X
+	// Paint
 	oldObj = SelectObject(hdc, GetStockObject(BLACK_BRUSH));
 	XsOsWViewPaintGrid(view, hdc);
 	XsOsWViewPaintSymbols(view, hdc);
-	// Temp
-	XsOsWViewPaintSymbol(view, hdc, 8, 'x');
 	DeleteObject(SelectObject(hdc, oldObj));
 }
 
-void XsOsWViewUpdateArea(XsOsWView view, HDC hdc, LPRECT area) {
+void XsOsWViewUpdateArea(XsOsWView view, HDC hdc, LPRECT area, BOOL repaint) {
 	view->area.tl.x = (int)area->left;
 	view->area.tl.y = (int)area->top;
 	view->area.br.x = (int)area->right;
 	view->area.br.y = (int)area->bottom;
 	XsOsWViewUpdateSymbolAreas(view);
-	XsOsWViewPaint(view, hdc);
+	if (repaint)
+		XsOsWViewPaint(view, hdc);
 }
 
-int XsOsWViewHandleMouseDown(XsOsWView view, HDC hdc, int x, int y) {
+int XsOsWViewUpdateSymbols(XsOsWView view, HDC hdc, char *buffer, int size, BOOL repaint) {
+	char *symbols = view->symbols;
+	int i, limit = size < N_SYMBOLS ? size : N_SYMBOLS;
+	for (i = 0; i < limit; ++i)
+		*(symbols + i) = *(buffer + i);
+	if (repaint)
+		XsOsWViewPaint(view, hdc);
+	return i;
+}
+
+int XsOsWViewHandleMouseDown(XsOsWView view, HDC hdc, int x, int y, BOOL repaint) {
 	int selected = XsOsWViewGetSymbolAreaIndex(view, x, y);
 	if (selected >= 0 && selected < N_SYMBOLS && view->selected == -1) {
 		view->selected = selected;
-		XsOsWViewPaint(view, hdc);
+		if (repaint)
+			XsOsWViewPaint(view, hdc);
 		return selected;
 	}
 	return -1;

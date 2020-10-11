@@ -63,8 +63,7 @@ char *xsos_string(unsigned int state, char *buffer) {
 				sym = 'A' + (sym - 'a');
 			}
 			*(buffer + i) = sym;
-		}
-		else {
+		} else {
 			*(buffer + i) = ' ';
 		}
 	}

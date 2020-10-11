@@ -4,6 +4,7 @@
 #include "framework.h"
 #include "XsOsW.h"
 #include "XsOsWView.h"
+#include "xsos.h"
 
 #define MAX_LOADSTRING 100
 
@@ -18,6 +19,7 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 XsOsWView view;
+unsigned int state;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -27,7 +29,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // TODO: Place code here.
+    // Initializa game state
+	state = xsos_start(XSOS_X);
 
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -53,6 +56,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             DispatchMessage(&msg);
         }
     }
+
+	XsOsWViewDestroy(view);
+	view = NULL;
 
     return (int) msg.wParam;
 }
@@ -146,9 +152,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 	case WM_LBUTTONUP:
 		{
+			int sel;
+			unsigned int tmp;
+			char buffer[XSOS_STRING_SIZE + 1];
 			HDC hdc = GetDC(hWnd);
 			if (hdc != NULL) {
-				XsOsWViewHandleMouseUp(view, hdc, LOWORD(lParam), HIWORD(lParam), TRUE);
+				sel = XsOsWViewHandleMouseUp(view, hdc, LOWORD(lParam), HIWORD(lParam), FALSE);
+				if (sel != -1 && !xsos_done(state)) {
+					tmp = xsos_select(state, (unsigned int)sel);
+					if (tmp != 0 && tmp != state) {
+						state = tmp;
+						xsos_string(state, buffer);
+						OutputDebugStringA(buffer);
+						OutputDebugStringA("\n");
+						XsOsWViewUpdateSymbols(view, hdc, buffer, XSOS_STRING_SIZE + 1, FALSE);
+					}
+				}
+				XsOsWViewPaint(view, hdc);
 				ReleaseDC(hWnd, hdc);
 			}
 		}
@@ -157,7 +177,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			HDC hdc = GetDC(hWnd);
 			if (hdc != NULL) {
-				XsOsWViewHandleMouseDown(view, hdc, LOWORD(lParam), HIWORD(lParam));
+				XsOsWViewHandleMouseDown(view, hdc, LOWORD(lParam), HIWORD(lParam), TRUE);
 				ReleaseDC(hWnd, hdc);
 			}
 		}
@@ -168,7 +188,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			PAINTSTRUCT ps;
 			HDC hdc;
 			if (GetClientRect(hWnd, &rc) && (hdc = BeginPaint(hWnd, &ps)) != NULL) {
-				XsOsWViewUpdateArea(view, hdc, &rc);
+				XsOsWViewUpdateArea(view, hdc, &rc, TRUE);
 				EndPaint(hWnd, &ps);
 			}
         }

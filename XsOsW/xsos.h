@@ -1,6 +1,8 @@
 #ifndef _XSOS_H
 #define _XSOS_H
 
+#define XSOS_X 1U
+#define XSOS_O 0U
 #define XSOS_STRING_SIZE 9
 #define XSOS_GRID_STRING_SIZE 18
 
