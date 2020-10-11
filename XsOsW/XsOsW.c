@@ -163,9 +163,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if (tmp != 0 && tmp != state) {
 						state = tmp;
 						xsos_string(state, buffer);
-						OutputDebugStringA(buffer);
-						OutputDebugStringA("\n");
-						XsOsWViewUpdateSymbols(view, hdc, buffer, XSOS_STRING_SIZE + 1, FALSE);
+						XsOsWViewUpdateSymbols(view, hdc, buffer, XSOS_STRING_SIZE, FALSE);
 					}
 				}
 				XsOsWViewPaint(view, hdc);
