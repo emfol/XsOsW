@@ -4,6 +4,7 @@
 
 #define N_SYMBOLS 9
 #define SZ_SYMBOL_AREA 8.0f
+#define O_SYMBOL_WIDTH 0.35f
 
 /*
  * Type Definitions and Data Structures
@@ -118,20 +119,16 @@ static void XsOsWViewPaintX(HDC hdc, int x, int y, int w, int h) {
 }
 
 static void XsOsWViewPaintO(HDC hdc, int x, int y, int w, int h) {
-	int sx = x + w - 1;
-	int sy = y + h / 2;
+	int sx, sy, rx, ry;
+	rx = x + w, ry = y + (h + 1) / 2;
 	BeginPath(hdc);
-	Arc(
-		hdc,
-		x,
-		y,
-		x + w,
-		y + h,
-		sx,
-		sy,
-		sx,
-		sy
-	);
+	Arc(hdc, x, y, x + w, y + h, rx, ry, rx, ry);
+	sx = (int)((float)w * O_SYMBOL_WIDTH);
+	sy = (int)((float)h * O_SYMBOL_WIDTH);
+	w -= 2 * sx, h -= 2 * sy;
+	x += sx, y += sy;
+	rx = x + w, ry = y + (h + 1) / 2;
+	Arc(hdc, x, y, x + w, y + h, rx, ry, rx, ry);
 	EndPath(hdc);
 	FillPath(hdc);
 }
