@@ -139,6 +139,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // Parse the menu selections:
             switch (wmId)
             {
+			case ID_GAME_RESET:
+				{
+					HDC hdc;
+					char buffer[XSOS_STRING_SIZE + 1];
+					if ((hdc = GetDC(hWnd)) != NULL) {
+						state = xsos_start(XSOS_X);
+						xsos_string(state, buffer);
+						XsOsWViewUpdateSymbols(view, hdc, buffer, XSOS_STRING_SIZE, TRUE);
+						ReleaseDC(hWnd, hdc);
+					}
+				}
+				break;
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
