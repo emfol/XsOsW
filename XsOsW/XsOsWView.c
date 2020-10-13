@@ -1,6 +1,5 @@
 #include "XsOsWView.h"
 #include <stdlib.h>
-#include <math.h>
 
 #define N_SYMBOLS 9
 #define SZ_SYMBOL_AREA 8.0f
@@ -46,8 +45,8 @@ struct XsOsWView {
  */
 
 static struct point *getScaledPoint(const struct fpoint* fp, const struct fscale* fs, struct point* p, float viewport) {
-	p->x = (int)roundf((fp->x / viewport) * fs->sx + fs->dx);
-	p->y = (int)roundf((fp->y / viewport) * fs->sy + fs->dy);
+	p->x = (int)((fp->x / viewport) * fs->sx + fs->dx + 0.5f);
+	p->y = (int)((fp->y / viewport) * fs->sy + fs->dy + 0.5f);
 	return p;
 }
 
